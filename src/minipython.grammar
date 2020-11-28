@@ -20,6 +20,7 @@ Tokens
 	eq = '=';
 	comma=',';
 	semi = ':';
+	if = 'if';
 	while = 'while';
     for = 'for';
     in = 'in';
@@ -36,6 +37,7 @@ Tokens
     div = '/';
     mod = '%';
 	dmult = '**';
+	none = 'None';
     open = 'open';
     type = 'type';
     max = 'max';
@@ -48,6 +50,7 @@ Tokens
     lesseq = '<=';
     greateq = '>=';
     noteq = '!=';
+	eqeq = '==';
     true = 'true';
     false = 'false';
     dot = '.';
@@ -56,7 +59,93 @@ Tokens
 	id = letter (letter | digit)*;
 	line_comment = '#' not_eol* eol;
 	string = '"'not_eol* '"';
-	number = digit+ | (digit+ '.' digit+);
+	num = digit+ | (digit+ '.' digit+);
 
 Ignored Tokens
 	blank, line_comment;
+
+Productions
+	goal = commands*;
+	
+	commands =	{stat} statement |
+				{expr} expression;
+	
+	function = def identifier l_par argument? r_par semi statement;
+	
+	argument = arg nextarg*;
+	
+	arg = identifier defaultval? ;
+	
+	defaultval = eq value;
+	
+	nextarg = comma identifier defaultval? ;
+	
+	statement =	{if}		tab* if comparison semi statement |
+				{while}		tab* while comparison semi statement |
+				{for}		tab* for [element]:identifier in [collection]:identifier semi statement |
+				{return}	tab* return expression |
+				{print}		tab* print expression commaexpression* |
+				{equals}	tab* identifier equalsigns expression |
+				{array}		tab* identifier l_br [index]:expression r_br [valarray]:eq expression |
+				{assert}	tab* assert expression commaexpression? |
+				{funccall}	tab* functioncall;
+	
+	
+	commaexpression = comma expression;
+	
+	equalsigns = {eq} eq |
+				{meq} meq |
+				{seq} seq ;
+	
+	expression =	{binary}	[l_exp]:expression operator [r_exp]:expression |
+					{array}		identifier l_br expression r_br |
+					{funccall}	functioncall |
+					{value}		value |
+					{id}		identifier |
+					{open}		open l_par [first]:expression comma [second]:expression r_par |
+					{type}		type l_par identifier r_par |
+					{max}		max l_par value nextvalue+ r_par |
+					{min}		min l_par value nextvalue+ r_par |
+					{pars}		l_par expression r_par |
+					{brackets}	l_br expression commaexpression* r_br;
+	
+	nextvalue = comma value;
+	
+	operator = {plus} plus |
+				{minus} minus |
+				{mult} mult |
+				{div} div |
+				{mod} mod |
+				{dmult} dmult;
+	
+	comparison =	{andor}			[l_comp]:comparison andor [r_comp]:comparison |
+					{not}			not comparison |
+					{numerical}		[l_num]:expression numcomparator [r_num]:expression |
+					{true}			true |
+					{false}			false;
+	
+	andor = {and} and |
+			{or}  or;
+	
+	numcomparator = {less} less |
+					{great} great |
+					{lesseq} lesseq |
+					{greateq} greateq |
+					{noteq} noteq |
+					{eqeq} eqeq;
+	
+	functioncall = identifier l_par arglist? r_par;
+	
+	arglist = expression commaexpression*;
+	
+	value = {funccall}	identifier dot functioncall |
+			{num}		number |
+			{str_l}		string |
+			{none}		none;
+			
+	number = num;
+	
+	identifier = id;
+	
+
+
