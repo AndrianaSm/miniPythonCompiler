@@ -113,14 +113,18 @@ Productions
     	nextvalue = comma value;
 
     	arithmetics = {mult} multiplication |
-    	              {plus} multiplication plus expression |
-    	              {minus} multiplication minus expression;
+    	              {plus} [left]:multiplication plus [right]:multiplication |
+    	              {minus} [left]:multiplication minus [right]:multiplication;
 
-    	multiplication = {element} element |
-    	                 {mult} multiplication mult element|
-    	                 {div} multiplication div element|
-    	                 {mod} multiplication mod element|
-    	                 {dmult} multiplication dmult element;
+    	multiplication = {element} powerorelement |
+    	                 {mult} [left]:powerorelement mult [right]:powerorelement |
+    	                 {div} [left]:powerorelement div [right]:powerorelement |
+    	                 {mod} [left]:powerorelement mod [right]:powerorelement;
+
+        powerorelement = {element} element |
+                            {power} power;
+
+        power = [elem]:element dmult [exponent]:element;
 
     	element = {value} value |
     	          {id} identifier |
