@@ -2,7 +2,6 @@ import java.io.*;
 import minipython.lexer.Lexer;
 import minipython.parser.Parser;
 import minipython.node.Start;
-import ASTPrinter;
 
 public class ParserTest2
 {
@@ -20,7 +19,7 @@ public class ParserTest2
 
 	ast.apply(new ASTPrinter());
 
-//      System.out.println(ast);
+      System.out.println(ast);
     }
     catch (Exception e)
     {

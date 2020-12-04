@@ -116,8 +116,11 @@ Productions
     	              {plus} multiplication plus expression |
     	              {minus} multiplication minus expression;
 
-    	multiplication = {value} element |
-    	                 {multiplication} multiplication mult element;
+    	multiplication = {element} element |
+    	                 {mult} multiplication mult element|
+    	                 {div} multiplication div element|
+    	                 {mod} multiplication mod element|
+    	                 {dmult} multiplication dmult element;
 
     	element = {value} value |
     	          {id} identifier |
@@ -129,7 +132,7 @@ Productions
      	            |{rule2} true
      	            |{rule3} false;
 
-			comparison_operator = {great} great |
+	comparison_operator = {great} great |
 			                      {less} less |
 			                      {greateq} greateq |
 			                      {lesseq} lesseq |
