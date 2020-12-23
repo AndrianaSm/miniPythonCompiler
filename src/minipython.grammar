@@ -84,8 +84,8 @@ Productions
 
 	nextarg = comma identifier defaultval? ;
 
-	statement =	{if}		tab* if comparison semi statement |
-				{while}		tab* while comparison semi statement |
+	statement =	{if}		tab* if booleanexpr semi statement |
+				{while}		tab* while booleanexpr semi statement |
 				{for}		tab* for [element]:identifier in [collection]:identifier semi statement |
 				{return}	tab* return expression |
 				{print}		tab* print expression commaexpression* |
@@ -102,39 +102,47 @@ Productions
 				{seq} seq ;
 
 	expression =
-    	                {binary}	arithmetics |
-    					{array}		identifier l_br expression r_br |
+    					{binary}	arithmetics |
     					{open}		open l_par [first]:expression comma [second]:expression r_par |
     					{type}		type l_par identifier r_par |
-    					{max}		max l_par value nextvalue+ r_par |
-    					{min}		min l_par value nextvalue+ r_par |
     					{brackets}	l_br expression commaexpression* r_br;
+
+
 
     	nextvalue = comma value;
 
     	arithmetics = {mult} multiplication |
-    	              {plus} [left]:multiplication plus [right]:multiplication |
-    	              {minus} [left]:multiplication minus [right]:multiplication;
+    	              {plus} [left]:arithmetics plus [right]:multiplication |
+    	              {minus} [left]:arithmetics minus [right]:multiplication;
 
     	multiplication = {element} powerorelement |
-    	                 {mult} [left]:powerorelement mult [right]:powerorelement |
-    	                 {div} [left]:powerorelement div [right]:powerorelement |
-    	                 {mod} [left]:powerorelement mod [right]:powerorelement;
+    	                 {mult} [left]:multiplication mult [right]:powerorelement |
+    	                 {div} [left]:multiplication div [right]:powerorelement |
+    	                 {mod} [left]:multiplication mod [right]:powerorelement;
 
         powerorelement = {element} element |
                             {power} power;
 
         power = [elem]:element dmult [exponent]:element;
 
-    	element = {value} value |
+    	element = {max}		max l_par value nextvalue+ r_par |
+                {min}		min l_par value nextvalue+ r_par |
+                {array}		identifier l_br expression r_br |
+                {value} value |
     	          {id} identifier |
     			  {funccall}	functioncall |
     			  {pars}		l_par expression r_par;
 
 
-	comparison= {rule1} [exp1]:expression comparison_operator [exp2]:expression
-     	            |{rule2} true
-     	            |{rule3} false;
+    booleanexpr = {rule1} booleanexpr andor comparison
+                   |{rule2} not [comp1]:comparison;
+
+    comparison=  {rule3} [exp1]:expression comparison_operator [exp2]:expression
+                         |{rule4} true
+                         |{rule5} false;
+
+    andor = {and} and |
+     			{or}  or;
 
 	comparison_operator = {great} great |
 			                      {less} less |
@@ -142,13 +150,6 @@ Productions
 			                      {lesseq} lesseq |
 			                      {eqeq} eqeq |
 			                      {noteq} noteq;
-
-	numcomparator = {less} less |
-					{great} great |
-					{lesseq} lesseq |
-					{greateq} greateq |
-					{noteq} noteq |
-					{eqeq} eqeq;
 
 	functioncall = identifier l_par arglist? r_par;
 
