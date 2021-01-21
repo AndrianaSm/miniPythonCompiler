@@ -69,106 +69,204 @@ Ignored Tokens
 	blank, line_comment;
 
 Productions
+	goal = commands*{->New goal([commands])};
+
+	commands =	{stat} statement {->New commands.stat(statement)}|
+				{func} function{->New commands.func (function)};
+
+	function = def identifier l_par argument? r_par semi statement{-> New function(identifier,[argument],statement)};
+
+	argument = arg nextarg*{-> New argument(arg,[nextarg])};
+
+	arg = identifier defaultval?{->New arg(identifier,[defaultval])} ;
+
+	defaultval = eq value{->New defaultval(value)};
+
+	nextarg = comma identifier defaultval? {-> New nextarg(identifier,[defaultval])};
+
+	statement =	{if}		tab* if boolexpr semi statement {-> New statement.if(boolexpr, statement)}|
+				{while}		tab* while boolexpr semi statement {-> New statement.while(boolexpr, statement)}|
+				{for}		tab* for [element]:identifier in [collection]:identifier semi statement {->New statement.for(element,collection,statement)}|
+				{return}	tab* return expression {->New statement.return(expression)}|
+				{print}		tab* print expression commaexpression* {->New statement.print(expression,[commaexpression])}|
+				{equals}	tab* identifier equalsigns expression {->New statement.equals(identifier,equalsigns,expression)}|
+				{array}		tab* identifier l_br [index]:expression r_br eq [valarray]:expression {->New statement.array(identifier,index,valarray)}|
+				{assert}	tab* assert expression commaexpression? {->New statement.assert(expression,[commaexpression])}|
+				{funccall}	tab* functioncall{->New statement.funccall(functioncall)};
+
+
+	commaexpression = comma expression{->New commaexpression(expression)};
+
+	equalsigns = {eq} eq {->New equalsigns.eq()}|
+				{meq} meq {->New equalsigns.meq()}|
+				{seq} seq {->New equalsigns.seq()};
+
+	expression =
+    					{binary}	arithmetics {->New expression.binary(arithmetics)}|
+    					{open}		open l_par [first]:expression comma [second]:expression r_par {->New expression.open(first,second)}|
+    					{type}		type l_par identifier r_par {->New expression.type(identifier)}|
+    					{brackets}	l_br expression commaexpression* r_br{->New expression.brackets(expression,[commaexpression])};
+
+
+
+    	nextvalue = comma value{->New nextvalue(value)};
+
+    	arithmetics = {mult} multiplication {->New arithmetics.mult(multiplication)}|
+    	              {plus} [left]:arithmetics plus [right]:multiplication {->New arithmetics.plus(left,right)}|
+    	              {minus} [left]:arithmetics minus [right]:multiplication {->New arithmetics.minus(left,right)};
+
+    	multiplication = {element} powerorelement {->New multiplication.element(powerorelement)}|
+    	                 {mult} [left]:multiplication mult [right]:powerorelement {->New multiplication.mult(left,right)}|
+    	                 {div} [left]:multiplication div [right]:powerorelement {->New multiplication.div(left,right)}|
+    	                 {mod} [left]:multiplication mod [right]:powerorelement {->New multiplication.mod(left,right)};
+
+        powerorelement = {element} element {->New powerorelement.element(element)}|
+                            {power} power{->New powerorelement.power(power)};
+
+        power = [elem]:element dmult [exponent]:element {->New power(elem,exponent)};
+
+    	element = {max}		max l_par value nextvalue+ r_par {->New element.max(value,[nextvalue])}|
+                {min}		min l_par value nextvalue+ r_par {->New element.min(value,[nextvalue])}|
+                {array}		identifier l_br expression r_br {->New element.array(identifier,expression)}|
+                {value} value {->New element.value(value)}|
+    	          {id} identifier {->New element.id(identifier)}|
+    			  {funccall}	functioncall {->New element.funccall(functioncall)}|
+    			  {pars}		l_par expression r_par {->New element.pars(expression)};
+
+
+    boolexpr = {rule1} boolexprpart andor boolexpr {-> New boolexpr.rule1(boolexprpart,andor,boolexpr)}
+                |{rule2} not boolexprpart {-> New boolexpr.rule2(boolexprpart)}
+                |{rule3} boolexprpart{-> New boolexpr.rule3(boolexprpart)};
+
+    boolexprpart = {value} boolvalue {-> New boolexprpart.value(boolvalue)}
+                        | {comparison} comparison {-> New boolexprpart.comparison(comparison)}
+                        | {pars} l_par boolexpr r_par {-> New boolexprpart.pars(boolexpr)};
+
+    boolvalue = {true} true{-> New boolvalue.true(true)} |
+                {false} false{-> New boolvalue.false(false)};
+
+    comparison= [exp1]:expression comparison_operator [exp2]:expression;
+
+
+
+    andor = {and} and {->New andor.and()}|
+     			{or}  or {->New andor.or()};
+
+	comparison_operator = {great} great {->New comparison_operator.great()}|
+			                      {less} less {->New comparison_operator.less()}|
+			                      {greateq} greateq {->New comparison_operator.greateq()}|
+			                      {lesseq} lesseq {->New comparison_operator.lesseq()}|
+			                      {eqeq} eqeq {->New comparison_operator.eqeq()}|
+			                      {noteq} noteq {->New comparison_operator.noteq()};
+
+	functioncall = identifier l_par arglist? r_par {->New functioncall(identifier,[arglist])};
+
+	arglist = expression commaexpression* {->New arglist(expression,[commaexpression])};
+
+	value = {funccall}	identifier dot functioncall {->New value.funccall(identifier,functioncall)}|
+			{num}		number {->New value.num(number)}|
+			{str_l}		string {->New value.str_l(string)}|
+			{none}		none {->New value.none(none)};
+
+	number = num {->New number(num)};
+
+	identifier = id {->New identifier(id)};
+
+Abstract Syntax Tree
+
 	goal = commands*;
 
 	commands =	{stat} statement |
 				{func} function;
 
-	function = def identifier l_par argument? r_par semi statement;
+	function = identifier argument* statement;
 
 	argument = arg nextarg*;
 
-	arg = identifier defaultval? ;
+	arg = identifier defaultval* ;
 
-	defaultval = eq value;
+	defaultval = value;
 
-	nextarg = comma identifier defaultval? ;
+	nextarg = identifier defaultval* ;
 
-	statement =	{if}		tab* if boolexpr semi statement |
-				{while}		tab* while boolexpr semi statement |
-				{for}		tab* for [element]:identifier in [collection]:identifier semi statement |
-				{return}	tab* return expression |
-				{print}		tab* print expression commaexpression* |
-				{equals}	tab* identifier equalsigns expression |
-				{array}		tab* identifier l_br [index]:expression r_br [valarray]:eq expression |
-				{assert}	tab* assert expression commaexpression? |
-				{funccall}	tab* functioncall;
+	 statement =    {if}        boolexpr statement |
+                    {while}	    boolexpr statement |
+                	{for}		[element]:identifier [collection]:identifier statement |
+                    {return}	expression |
+                	{print}     expression commaexpression* |
+				    {equals}	identifier equalsigns expression |
+				    {array}		identifier  [index]:expression  [valarray]: expression |
+				    {assert}	expression commaexpression* |
+				    {funccall}	functioncall;
 
+    commaexpression = expression;
 
-	commaexpression = comma expression;
+    equalsigns =    {eq} |
+    			    {meq} |
+    				{seq};
 
-	equalsigns = {eq} eq |
-				{meq} meq |
-				{seq} seq ;
+    expression =
+        					{binary}	arithmetics |
+        					{open}		 [first]:expression  [second]:expression  |
+        					{type}		  identifier  |
+        					{brackets}	 expression commaexpression* ;
 
-	expression =
-    					{binary}	arithmetics |
-    					{open}		open l_par [first]:expression comma [second]:expression r_par |
-    					{type}		type l_par identifier r_par |
-    					{brackets}	l_br expression commaexpression* r_br;
+    nextvalue = value;
 
+    arithmetics = {mult} multiplication |
+        	              {plus} [left]:arithmetics  [right]:multiplication |
+        	              {minus} [left]:arithmetics  [right]:multiplication;
 
+    multiplication = {element} powerorelement |
+        	                 {mult} [left]:multiplication  [right]:powerorelement |
+        	                 {div} [left]:multiplication  [right]:powerorelement |
+        	                 {mod} [left]:multiplication  [right]:powerorelement;
 
-    	nextvalue = comma value;
+    powerorelement = {element} element |
+                     {power} power;
 
-    	arithmetics = {mult} multiplication |
-    	              {plus} [left]:arithmetics plus [right]:multiplication |
-    	              {minus} [left]:arithmetics minus [right]:multiplication;
+    power = [elem]:element  [exponent]:element;
 
-    	multiplication = {element} powerorelement |
-    	                 {mult} [left]:multiplication mult [right]:powerorelement |
-    	                 {div} [left]:multiplication div [right]:powerorelement |
-    	                 {mod} [left]:multiplication mod [right]:powerorelement;
+    element = {max}	  value nextvalue+  |
+              {min}	  value nextvalue+  |
+              {array}	identifier  expression  |
+              {value} value |
+        	  {id} identifier |
+              {funccall}  functioncall |
+        	  {pars} expression ;
 
-        powerorelement = {element} element |
-                            {power} power;
+    boolexpr = {rule1} boolexprpart andor boolexpr |
+               {rule2} boolexprpart |
+               {rule3} boolexprpart;
 
-        power = [elem]:element dmult [exponent]:element;
+    boolexprpart = {value} boolvalue |
+                   {comparison} comparison |
+                   {pars}  boolexpr;
 
-    	element = {max}		max l_par value nextvalue+ r_par |
-                {min}		min l_par value nextvalue+ r_par |
-                {array}		identifier l_br expression r_br |
-                {value} value |
-    	          {id} identifier |
-    			  {funccall}	functioncall |
-    			  {pars}		l_par expression r_par;
-
-
-    boolexpr = {rule1} boolexprpart andor boolexpr
-                |{rule2} not boolexprpart
-                |{rule3} boolexprpart;
-
-    boolexprpart = {value} boolvalue
-                    | {comparison} comparison
-                    | {pars} l_par boolexpr r_par;
-
-    boolvalue = {true} true |
-                {false} false;
+    boolvalue = {true} true|
+                {false} false ;
 
     comparison= [exp1]:expression comparison_operator [exp2]:expression;
 
-    andor = {and} and |
-     			{or}  or;
+    andor = {and} |
+         	{or};
 
-	comparison_operator = {great} great |
-			                      {less} less |
-			                      {greateq} greateq |
-			                      {lesseq} lesseq |
-			                      {eqeq} eqeq |
-			                      {noteq} noteq;
+    comparison_operator =   {great} |
+    			            {less} |
+    			            {greateq} |
+    			            {lesseq} |
+    			            {eqeq} |
+    			            {noteq};
 
-	functioncall = identifier l_par arglist? r_par;
+    functioncall = identifier arglist*;
 
-	arglist = expression commaexpression*;
+    arglist = expression commaexpression*;
 
-	value = {funccall}	identifier dot functioncall |
-			{num}		number |
-			{str_l}		string |
-			{none}		none;
+    value = {funccall} identifier functioncall |
+    		{num} number |
+    		{str_l}	string |
+    		{none} none;
 
-	number = num;
+    number = num;
 
-	identifier = id;
-
-
-
+    identifier = id;

@@ -9,7 +9,7 @@ def fib(n):    # write Fibonacci series up to n
                         print a
                         a = b
                         b = a + b
-                        c = a*b**2
+                        c =a*b**2
                         
 def funcwithdef(name,university="aueb"):
        print name, " studies in ", university
