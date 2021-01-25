@@ -107,31 +107,29 @@ Productions
     					{type}		type l_par identifier r_par {->New expression.type(identifier)}|
     					{brackets}	l_br expression commaexpression* r_br{->New expression.brackets(expression,[commaexpression])};
 
-
-
     	nextvalue = comma value{->New nextvalue(value)};
 
-    	arithmetics = {mult} multiplication {->New arithmetics.mult(multiplication)}|
+        arithmetics = {mult} multiplication {->New arithmetics.mult(multiplication)}|
     	              {plus} [left]:arithmetics plus [right]:multiplication {->New arithmetics.plus(left,right)}|
     	              {minus} [left]:arithmetics minus [right]:multiplication {->New arithmetics.minus(left,right)};
 
-    	multiplication = {element} powerorelement {->New multiplication.element(powerorelement)}|
-    	                 {mult} [left]:multiplication mult [right]:powerorelement {->New multiplication.mult(left,right)}|
-    	                 {div} [left]:multiplication div [right]:powerorelement {->New multiplication.div(left,right)}|
-    	                 {mod} [left]:multiplication mod [right]:powerorelement {->New multiplication.mod(left,right)};
+    	multiplication = {element} powerorelement {-> powerorelement.multiplication}|
+    	                  {mult} multiplication mult powerorelement {->New multiplication.mult(multiplication,powerorelement.multiplication)}|
+                           {div} multiplication div powerorelement {->New multiplication.div(multiplication,powerorelement.multiplication)}|
+                           {mod} multiplication mod powerorelement {->New multiplication.mod(multiplication,powerorelement.multiplication)};
 
-        powerorelement = {element} element {->New powerorelement.element(element)}|
-                            {power} power{->New powerorelement.power(power)};
+        powerorelement{-> multiplication} = {element} element {-> element.multiplication}|
+                            {power} power{-> power.multiplication};
 
-        power = [elem]:element dmult [exponent]:element {->New power(elem,exponent)};
+        power{-> multiplication} = [elem]:element dmult [exponent]:element {-> New multiplication.power(elem.multiplication,exponent.multiplication)};
 
-    	element = {max}		max l_par value nextvalue+ r_par {->New element.max(value,[nextvalue])}|
-                {min}		min l_par value nextvalue+ r_par {->New element.min(value,[nextvalue])}|
-                {array}		identifier l_br expression r_br {->New element.array(identifier,expression)}|
-                {value} value {->New element.value(value)}|
-    	          {id} identifier {->New element.id(identifier)}|
-    			  {funccall}	functioncall {->New element.funccall(functioncall)}|
-    			  {pars}		l_par expression r_par {->New element.pars(expression)};
+    	element{-> multiplication} = {max}  max l_par value nextvalue+ r_par {->New multiplication.max(value,[nextvalue])}|
+                                     {min}	min l_par value nextvalue+ r_par {->New multiplication.min(value,[nextvalue])}|
+                                     {array}    identifier l_br expression r_br {->New multiplication.array(identifier,expression)}|
+                                     {value} value {->New multiplication.value(value)}|
+    	                             {id} identifier {->New multiplication.id(identifier)}|
+    			                     {funccall}	functioncall {->New multiplication.funccall(functioncall)}|
+    			                     {pars}     l_par expression r_par {->New multiplication.pars(expression)};
 
 
     boolexpr = {rule1} boolexprpart andor boolexpr {-> New boolexpr.rule1(boolexprpart,andor,boolexpr)}
@@ -146,7 +144,6 @@ Productions
                 {false} false{-> New boolvalue.false(false)};
 
     comparison= [exp1]:expression comparison_operator [exp2]:expression;
-
 
 
     andor = {and} and {->New andor.and()}|
@@ -218,22 +215,17 @@ Abstract Syntax Tree
         	              {minus} [left]:arithmetics  [right]:multiplication;
 
     multiplication = {element} powerorelement |
-        	                 {mult} [left]:multiplication  [right]:powerorelement |
-        	                 {div} [left]:multiplication  [right]:powerorelement |
-        	                 {mod} [left]:multiplication  [right]:powerorelement;
-
-    powerorelement = {element} element |
-                     {power} power;
-
-    power = [elem]:element  [exponent]:element;
-
-    element = {max}	  value nextvalue+  |
-              {min}	  value nextvalue+  |
-              {array}	identifier  expression  |
-              {value} value |
-        	  {id} identifier |
-              {funccall}  functioncall |
-        	  {pars} expression ;
+                     {mult} [left]:multiplication  [right]:multiplication |
+        	         {div} [left]:multiplication  [right]:multiplication |
+        	         {mod} [left]:multiplication  [right]:multiplication |
+        	         {max} value nextvalue+ |
+				 {min} value nextvalue+ |
+				 {array} identifier expression |
+				 {value} value |
+				 {id} identifier |
+				 {funccall} functioncall |
+				 {pars} expression |
+				 {power} [elem]:multiplication [exponent]:multiplication;
 
     boolexpr = {rule1} boolexprpart andor boolexpr |
                {rule2} boolexprpart |
